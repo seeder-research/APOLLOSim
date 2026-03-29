@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/seeder-research/APOLLOSim/apollosim/schema/uarch.schema.json",
+  "title": "APOLLOSim Microarchitecture Layer Output",
+  "version": "0.1.0",
+  "type": "object",
+  "required": ["apollosim_schema_version","layer","tool","fidelity_level","session_id","timestamp_utc","accelerator_type","parameter_snapshot","metrics","provenance"],
+  "properties": {
+    "apollosim_schema_version": { "type": "string", "const": "0.1.0" },
+    "layer":           { "type": "string", "const": "uarch" },
+    "tool":            { "type": "string", "enum": ["gem5","timeloop","cacti","mcpat","analytical","surrogate"] },
+    "fidelity_level":  { "type": "string", "enum": ["ANALYTICAL","SURROGATE","PHYSICS"] },
+    "session_id":      { "type": "string", "format": "uuid" },
+    "timestamp_utc":   { "type": "string", "format": "date-time" },
+    "accelerator_type":{ "type": "string", "enum": ["CIM_RRAM","CIM_FeFET","systolic","photonic","hybrid_CIM_photonic","GPU_like"] },
+    "parameter_snapshot": {
+      "type": "object",
+      "properties": {
+        "array_rows":         { "type": "integer" },
+        "array_cols":         { "type": "integer" },
+        "num_arrays":         { "type": "integer" },
+        "dataflow":           { "type": "string", "enum": ["output_stationary","weight_stationary","input_stationary","row_stationary"] },
+        "clock_frequency_GHz":{ "type": "number" },
+        "technology_node_nm": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "compute": {
+          "type": "object",
+          "properties": {
+            "throughput_TOPS":        { "type": "number" },
+            "peak_throughput_TOPS":   { "type": "number" },
+            "utilization":            { "type": "number", "minimum": 0, "maximum": 1 },
+            "latency_ns":             { "type": "number" },
+            "energy_per_op_fJ":       { "type": "number" },
+            "compute_density_TOPS_mm2":{ "type": "number" }
+          }
+        },
+        "memory": {
+          "type": "object",
+          "properties": {
+            "on_chip_sram_KB":        { "type": "number" },
+            "bandwidth_GB_s":         { "type": "number" },
+            "memory_access_energy_pJ":{ "type": "number" },
+            "buffer_hit_rate":        { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "power_area": {
+          "type": "object",
+          "properties": {
+            "total_power_mW":         { "type": "number" },
+            "compute_power_mW":       { "type": "number" },
+            "memory_power_mW":        { "type": "number" },
+            "interconnect_power_mW":  { "type": "number" },
+            "total_area_mm2":         { "type": "number" },
+            "power_density_mW_mm2":   { "type": "number" }
+          }
+        },
+        "photonic_noc": {
+          "type": "object",
+          "description": "Photonic NoC metrics — present when accelerator_type includes photonic",
+          "properties": {
+            "aggregate_bandwidth_Tbps":  { "type": "number" },
+            "energy_per_bit_fJ":         { "type": "number" },
+            "optical_latency_ps":        { "type": "number" },
+            "laser_power_mW":            { "type": "number" },
+            "wdm_channels":              { "type": "integer" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "uncertainties": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object", "required": ["type","value"],
+        "properties": { "type": { "type": "string" }, "value": {} }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["input_ids","tool_version","config_hash"],
+      "properties": {
+        "input_ids":    { "type": "array", "items": { "type": "string" } },
+        "tool_version": { "type": "string" },
+        "config_hash":  { "type": "string" },
+        "runtime_s":    { "type": "number" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

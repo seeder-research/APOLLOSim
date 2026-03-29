@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/seeder-research/APOLLOSim/apollosim/schema/system.schema.json",
+  "title": "APOLLOSim System Architecture Layer Output",
+  "version": "0.1.0",
+  "type": "object",
+  "required": ["apollosim_schema_version","layer","tool","fidelity_level","session_id","timestamp_utc","parameter_snapshot","metrics","provenance"],
+  "properties": {
+    "apollosim_schema_version": { "type": "string", "const": "0.1.0" },
+    "layer":          { "type": "string", "const": "system" },
+    "tool":           { "type": "string", "enum": ["gem5_aladdin","stonne","accelsim","analytical","surrogate"] },
+    "fidelity_level": { "type": "string", "enum": ["ANALYTICAL","SURROGATE","PHYSICS"] },
+    "session_id":     { "type": "string", "format": "uuid" },
+    "timestamp_utc":  { "type": "string", "format": "date-time" },
+    "parameter_snapshot": {
+      "type": "object",
+      "properties": {
+        "num_chiplets":        { "type": "integer" },
+        "interconnect_type":   { "type": "string", "enum": ["electrical","photonic","hybrid"] },
+        "memory_hierarchy":    { "type": "string" },
+        "host_cpu_cores":      { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "performance": {
+          "type": "object",
+          "properties": {
+            "system_throughput_TOPS":      { "type": "number" },
+            "inference_latency_ms":        { "type": "number" },
+            "tokens_per_second":           { "type": "number", "description": "LLM inference throughput" },
+            "frames_per_second":           { "type": "number", "description": "Vision workload throughput" }
+          }
+        },
+        "power_thermal": {
+          "type": "object",
+          "properties": {
+            "system_power_W":          { "type": "number" },
+            "thermal_design_power_W":  { "type": "number" },
+            "efficiency_TOPS_W":       { "type": "number" }
+          }
+        },
+        "area_cost": {
+          "type": "object",
+          "properties": {
+            "system_area_mm2":         { "type": "number" },
+            "die_count":               { "type": "integer" },
+            "package_type":            { "type": "string" }
+          }
+        },
+        "memory_system": {
+          "type": "object",
+          "properties": {
+            "total_capacity_GB":        { "type": "number" },
+            "hbm_bandwidth_TB_s":       { "type": "number" },
+            "interconnect_bandwidth_TB_s":{ "type": "number" },
+            "memory_bound_fraction":    { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "uncertainties": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object", "required": ["type","value"],
+        "properties": { "type": { "type": "string" }, "value": {} }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["input_ids","tool_version","config_hash"],
+      "properties": {
+        "input_ids":    { "type": "array", "items": { "type": "string" } },
+        "tool_version": { "type": "string" },
+        "config_hash":  { "type": "string" },
+        "runtime_s":    { "type": "number" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/seeder-research/APOLLOSim/apollosim/schema/workload.schema.json",
+  "title": "APOLLOSim Workload Descriptor Schema",
+  "version": "0.1.0",
+  "type": "object",
+  "required": ["apollosim_schema_version","layer","session_id","timestamp_utc","workload_type","model_name","metrics"],
+  "properties": {
+    "apollosim_schema_version": { "type": "string", "const": "0.1.0" },
+    "layer":         { "type": "string", "const": "workload" },
+    "session_id":    { "type": "string", "format": "uuid" },
+    "timestamp_utc": { "type": "string", "format": "date-time" },
+    "workload_type": { "type": "string", "enum": ["inference","training","fine_tuning","signal_processing"] },
+    "model_name":    { "type": "string", "description": "e.g. ResNet-50, BERT-base, custom" },
+    "operator_graph": {
+      "type": "object",
+      "description": "ONNX-compatible operator graph in JSON representation",
+      "properties": {
+        "nodes": { "type": "array" },
+        "edges": { "type": "array" },
+        "inputs": { "type": "array" },
+        "outputs": { "type": "array" }
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "description": "How workload layers are mapped to hardware",
+      "properties": {
+        "strategy":    { "type": "string", "enum": ["CIM","systolic","photonic","hybrid"] },
+        "tiling":      { "type": "object", "additionalProperties": true },
+        "dataflow":    { "type": "string" },
+        "parallelism": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "compute": {
+          "type": "object",
+          "properties": {
+            "total_ops_GOps":           { "type": "number" },
+            "arithmetic_intensity_ops_byte": { "type": "number" },
+            "execution_time_ms":        { "type": "number" },
+            "throughput_TOPS":          { "type": "number" },
+            "hardware_utilization":     { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "memory": {
+          "type": "object",
+          "properties": {
+            "total_memory_accesses_GB": { "type": "number" },
+            "weight_size_MB":           { "type": "number" },
+            "activation_size_MB":       { "type": "number" },
+            "dram_accesses_GB":         { "type": "number" }
+          }
+        },
+        "energy": {
+          "type": "object",
+          "properties": {
+            "total_energy_mJ":          { "type": "number" },
+            "compute_energy_mJ":        { "type": "number" },
+            "memory_energy_mJ":         { "type": "number" },
+            "interconnect_energy_mJ":   { "type": "number" }
+          }
+        },
+        "accuracy": {
+          "type": "object",
+          "description": "Model accuracy metrics — for quantisation-aware flows",
+          "properties": {
+            "top1_accuracy_pct":        { "type": "number" },
+            "top5_accuracy_pct":        { "type": "number" },
+            "perplexity":               { "type": "number" },
+            "snr_weight_quantisation_dB": { "type": "number" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "input_ids":         { "type": "array", "items": { "type": "string" } },
+        "onnx_model_hash":   { "type": "string" },
+        "mapper_version":    { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

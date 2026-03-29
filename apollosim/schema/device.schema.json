@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/seeder-research/APOLLOSim/apollosim/schema/device.schema.json",
+  "title": "APOLLOSim Device/Material Layer Output",
+  "description": "Canonical output schema for the device/material abstraction layer. Covers CMOS, RRAM, FeFET, and photonic device types.",
+  "version": "0.1.0",
+  "type": "object",
+  "required": [
+    "apollosim_schema_version",
+    "layer",
+    "tool",
+    "fidelity_level",
+    "session_id",
+    "timestamp_utc",
+    "device_type",
+    "parameter_snapshot",
+    "metrics",
+    "provenance"
+  ],
+  "properties": {
+
+    "apollosim_schema_version": { "type": "string", "const": "0.1.0" },
+    "layer":                    { "type": "string", "const": "device" },
+    "tool":                     { "type": "string", "enum": ["sentaurus", "silvaco", "quantumatk", "devsim", "analytical", "surrogate"] },
+    "fidelity_level":           { "type": "string", "enum": ["ANALYTICAL", "SURROGATE", "PHYSICS"] },
+    "session_id":               { "type": "string", "format": "uuid" },
+    "timestamp_utc":            { "type": "string", "format": "date-time" },
+
+    "device_type": {
+      "type": "string",
+      "enum": ["CMOS", "RRAM", "FeFET", "photonic_modulator", "photodetector", "photonic_passive"],
+      "description": "Determines which metric subsets are required vs optional."
+    },
+
+    "parameter_snapshot": {
+      "type": "object",
+      "description": "Input parameters that produced this output — key for DSE provenance.",
+      "properties": {
+        "technology_node_nm":  { "type": "number" },
+        "gate_length_nm":      { "type": "number" },
+        "fin_width_nm":        { "type": "number" },
+        "oxide_thickness_nm":  { "type": "number" },
+        "channel_material":    { "type": "string" },
+        "doping_profile":      { "type": "string" },
+        "temperature_K":       { "type": "number", "default": 300 }
+      },
+      "additionalProperties": true
+    },
+
+    "metrics": {
+      "type": "object",
+      "description": "All metric values in SI base units unless noted in description.",
+      "properties": {
+
+        "cmos": {
+          "type": "object",
+          "description": "Present when device_type = CMOS",
+          "properties": {
+            "vth":            { "type": "number", "description": "Threshold voltage (V)" },
+            "ss":             { "type": "number", "description": "Subthreshold swing (mV/dec)" },
+            "ioff":           { "type": "number", "description": "Off-state leakage current per unit width (A/um)" },
+            "ion":            { "type": "number", "description": "On-state current per unit width (A/um)" },
+            "ion_ioff_ratio": { "type": "number", "description": "Ion/Ioff ratio (dimensionless)" },
+            "cgg":            { "type": "number", "description": "Total gate capacitance per unit width (F/um)" },
+            "cgg_breakdown": {
+              "type": "object",
+              "properties": {
+                "cgs": { "type": "number" },
+                "cgd": { "type": "number" },
+                "cgb": { "type": "number" }
+              }
+            },
+            "gm":             { "type": "number", "description": "Transconductance peak (S/um)" },
+            "gds":            { "type": "number", "description": "Output conductance at Vds=Vdd (S/um)" },
+            "ft_GHz":         { "type": "number", "description": "Unity-gain frequency (GHz)" },
+            "fmax_GHz":       { "type": "number", "description": "Maximum oscillation frequency (GHz)" },
+            "dibl_mV_V":      { "type": "number", "description": "DIBL (mV/V)" },
+            "id_vg_curve": {
+              "type": "object",
+              "description": "Id-Vg transfer curve",
+              "properties": {
+                "vg_V":  { "type": "array", "items": { "type": "number" } },
+                "id_A":  { "type": "array", "items": { "type": "number" } },
+                "vds_V": { "type": "number" }
+              }
+            },
+            "id_vd_curve": {
+              "type": "object",
+              "description": "Id-Vd output curve family",
+              "properties": {
+                "vd_V":    { "type": "array", "items": { "type": "number" } },
+                "id_A":    { "type": "array", "items": { "type": "array", "items": { "type": "number" } } },
+                "vg_V":    { "type": "array", "items": { "type": "number" } }
+              }
+            }
+          }
+        },
+
+        "rram": {
+          "type": "object",
+          "description": "Present when device_type = RRAM",
+          "properties": {
+            "lrs_ohm":                       { "type": "number", "description": "Low-resistance state median (Ω)" },
+            "hrs_ohm":                       { "type": "number", "description": "High-resistance state median (Ω)" },
+            "hrs_lrs_ratio":                 { "type": "number", "description": "HRS/LRS ratio (dimensionless)" },
+            "set_voltage_V":                 { "type": "number", "description": "SET switching voltage (V)" },
+            "reset_voltage_V":               { "type": "number", "description": "RESET switching voltage (V)" },
+            "set_current_A":                 { "type": "number", "description": "Compliance current during SET (A)" },
+            "retention_time_s":              { "type": "number", "description": "Data retention time at 85°C (s)" },
+            "endurance_cycles":              { "type": "integer", "description": "Number of endurance cycles before failure" },
+            "conductance_levels":            { "type": "array", "items": { "type": "number" }, "description": "Multi-level conductance states (S)" },
+            "num_bits":                      { "type": "integer", "description": "Effective bits per cell" },
+            "cycle_to_cycle_sigma_ohm":      { "type": "number", "description": "Cycle-to-cycle variability 1σ (Ω)" },
+            "device_to_device_sigma_ohm":    { "type": "number", "description": "Device-to-device variability 1σ (Ω)" },
+            "switching_energy_J":            { "type": "number", "description": "Energy per switching event (J)" },
+            "iv_curve": {
+              "type": "object",
+              "properties": {
+                "v_V": { "type": "array", "items": { "type": "number" } },
+                "i_A": { "type": "array", "items": { "type": "number" } }
+              }
+            }
+          }
+        },
+
+        "fefet": {
+          "type": "object",
+          "description": "Present when device_type = FeFET",
+          "properties": {
+            "remnant_polarization_uC_cm2":   { "type": "number", "description": "Remnant polarization Pr (µC/cm²)" },
+            "coercive_field_MV_cm":          { "type": "number", "description": "Coercive field Ec (MV/cm)" },
+            "vth_window_V":                  { "type": "number", "description": "Vth window between P↑ and P↓ states (V)" },
+            "vth_p_up_V":                    { "type": "number", "description": "Vth in polarization-up state (V)" },
+            "vth_p_down_V":                  { "type": "number", "description": "Vth in polarization-down state (V)" },
+            "retention_time_s":              { "type": "number" },
+            "endurance_cycles":              { "type": "integer" },
+            "imprint_shift_V":               { "type": "number", "description": "Imprint-induced Vth shift (V)" },
+            "pv_hysteresis": {
+              "type": "object",
+              "description": "P-V hysteresis loop",
+              "properties": {
+                "v_V":    { "type": "array", "items": { "type": "number" } },
+                "p_uC_cm2": { "type": "array", "items": { "type": "number" } }
+              }
+            }
+          }
+        },
+
+        "photonic": {
+          "type": "object",
+          "description": "Present when device_type = photonic_modulator | photodetector | photonic_passive",
+          "properties": {
+            "insertion_loss_dB":       { "type": "number", "description": "Insertion loss (dB)" },
+            "extinction_ratio_dB":     { "type": "number", "description": "Extinction ratio (dB)" },
+            "bandwidth_3db_GHz":       { "type": "number", "description": "3dB electro-optic or optical bandwidth (GHz)" },
+            "neff":                    { "type": "number", "description": "Effective refractive index" },
+            "ng":                      { "type": "number", "description": "Group index" },
+            "dispersion_ps_nm_km":     { "type": "number", "description": "Group velocity dispersion D (ps/nm/km)" },
+            "propagation_loss_dB_cm":  { "type": "number", "description": "Waveguide propagation loss (dB/cm)" },
+            "half_wave_voltage_V":     { "type": "number", "description": "Vπ for modulators (V)" },
+            "vpi_l_V_cm":              { "type": "number", "description": "VπL product (V·cm)" },
+            "responsivity_A_W":        { "type": "number", "description": "Photodetector responsivity (A/W)" },
+            "dark_current_A":          { "type": "number", "description": "Photodetector dark current (A)" },
+            "s_parameters": {
+              "type": "object",
+              "description": "S-parameter matrix vs frequency",
+              "properties": {
+                "frequency_Hz": { "type": "array", "items": { "type": "number" } },
+                "s11_re": { "type": "array", "items": { "type": "number" } },
+                "s11_im": { "type": "array", "items": { "type": "number" } },
+                "s21_re": { "type": "array", "items": { "type": "number" } },
+                "s21_im": { "type": "array", "items": { "type": "number" } }
+              }
+            },
+            "wavelength_nm": { "type": "number", "description": "Design/operating wavelength (nm)" }
+          }
+        },
+
+        "thermal": {
+          "type": "object",
+          "description": "Thermal metrics — applicable to all device types",
+          "properties": {
+            "thermal_resistance_K_W":  { "type": "number", "description": "Device self-heating thermal resistance (K/W)" },
+            "max_junction_temp_K":     { "type": "number", "description": "Peak junction temperature at rated power (K)" },
+            "temperature_coefficient_percent_K": { "type": "number", "description": "Performance sensitivity to temperature (%/K)" }
+          }
+        }
+
+      },
+      "additionalProperties": false
+    },
+
+    "uncertainties": {
+      "type": "object",
+      "description": "Per-metric uncertainty descriptors. Keys match metric paths.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type", "value"],
+        "properties": {
+          "type":  { "type": "string", "enum": ["gaussian", "bounded", "empirical"] },
+          "value": { "description": "sigma (gaussian), [low,high] (bounded), or histogram bins (empirical)" }
+        }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "required": ["input_ids", "tool_version", "config_hash"],
+      "properties": {
+        "input_ids":    { "type": "array", "items": { "type": "string" }, "description": "session_ids of upstream LayerOutputs consumed" },
+        "tool_version": { "type": "string" },
+        "config_hash":  { "type": "string", "description": "SHA256 of the tool config YAML" },
+        "runtime_s":    { "type": "number", "description": "Wall-clock simulation time (s)" }
+      }
+    }
+
+  },
+  "additionalProperties": false
+}

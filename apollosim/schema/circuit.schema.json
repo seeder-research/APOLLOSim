@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/seeder-research/APOLLOSim/apollosim/schema/circuit.schema.json",
+  "title": "APOLLOSim Circuit Layer Output",
+  "version": "0.1.0",
+  "type": "object",
+  "required": ["apollosim_schema_version","layer","tool","fidelity_level","session_id","timestamp_utc","circuit_type","parameter_snapshot","metrics","provenance"],
+  "properties": {
+    "apollosim_schema_version": { "type": "string", "const": "0.1.0" },
+    "layer":          { "type": "string", "const": "circuit" },
+    "tool":           { "type": "string", "enum": ["ngspice","xyce","spectre","hspice","analytical","surrogate"] },
+    "fidelity_level": { "type": "string", "enum": ["ANALYTICAL","SURROGATE","PHYSICS"] },
+    "session_id":     { "type": "string", "format": "uuid" },
+    "timestamp_utc":  { "type": "string", "format": "date-time" },
+    "circuit_type":   { "type": "string", "enum": ["digital","analog","mixed_signal","memory_array","photonic_driver","tia"] },
+    "parameter_snapshot": {
+      "type": "object",
+      "properties": {
+        "technology_node_nm":  { "type": "number" },
+        "supply_voltage_V":    { "type": "number" },
+        "temperature_K":       { "type": "number", "default": 300 },
+        "corner":              { "type": "string", "enum": ["tt","ss","ff","sf","fs"] }
+      },
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "timing": {
+          "type": "object",
+          "properties": {
+            "propagation_delay_ps": { "type": "number" },
+            "setup_time_ps":        { "type": "number" },
+            "hold_time_ps":         { "type": "number" },
+            "clock_frequency_GHz":  { "type": "number" }
+          }
+        },
+        "power": {
+          "type": "object",
+          "properties": {
+            "dynamic_mW":   { "type": "number" },
+            "static_uW":    { "type": "number" },
+            "total_mW":     { "type": "number" },
+            "activity_factor": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "area": {
+          "type": "object",
+          "properties": {
+            "total_um2":    { "type": "number" },
+            "active_um2":   { "type": "number" }
+          }
+        },
+        "analog": {
+          "type": "object",
+          "description": "Analog / mixed-signal metrics",
+          "properties": {
+            "gain_dB":         { "type": "number" },
+            "bandwidth_GHz":   { "type": "number" },
+            "snr_dB":          { "type": "number" },
+            "noise_figure_dB": { "type": "number" },
+            "iip3_dBm":        { "type": "number" },
+            "enob":            { "type": "number", "description": "Effective number of bits (ADC/DAC)" },
+            "sfdr_dBc":        { "type": "number" }
+          }
+        },
+        "memory_peripheral": {
+          "type": "object",
+          "description": "Sense amplifier, write driver, row decoder metrics",
+          "properties": {
+            "sense_amp_offset_mV":   { "type": "number" },
+            "write_driver_current_uA": { "type": "number" },
+            "decoder_delay_ps":      { "type": "number" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "uncertainties": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type","value"],
+        "properties": {
+          "type":  { "type": "string", "enum": ["gaussian","bounded","empirical"] },
+          "value": {}
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["input_ids","tool_version","config_hash"],
+      "properties": {
+        "input_ids":    { "type": "array", "items": { "type": "string" } },
+        "tool_version": { "type": "string" },
+        "config_hash":  { "type": "string" },
+        "runtime_s":    { "type": "number" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

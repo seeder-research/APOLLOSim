@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/seeder-research/APOLLOSim/apollosim/schema/memory.schema.json",
+  "title": "APOLLOSim Memory Layer Output",
+  "description": "Canonical output schema for RRAM/FeFET array-level simulation. Captures array-level electrical behaviour, variability statistics, and CIM-specific metrics derived from device-level inputs.",
+  "version": "0.1.0",
+  "type": "object",
+  "required": [
+    "apollosim_schema_version",
+    "layer",
+    "tool",
+    "fidelity_level",
+    "session_id",
+    "timestamp_utc",
+    "memory_type",
+    "array_config",
+    "parameter_snapshot",
+    "metrics",
+    "provenance"
+  ],
+  "properties": {
+
+    "apollosim_schema_version": { "type": "string", "const": "0.1.0" },
+    "layer":                    { "type": "string", "const": "memory" },
+    "tool":                     { "type": "string", "enum": ["jart_vcm", "stanford_rram", "custom", "analytical", "surrogate"] },
+    "fidelity_level":           { "type": "string", "enum": ["ANALYTICAL", "SURROGATE", "PHYSICS"] },
+    "session_id":               { "type": "string", "format": "uuid" },
+    "timestamp_utc":            { "type": "string", "format": "date-time" },
+
+    "memory_type": {
+      "type": "string",
+      "enum": ["RRAM", "FeFET", "PCM", "STT_MRAM"],
+      "description": "NVM technology. Only RRAM and FeFET are v0.1 targets."
+    },
+
+    "array_config": {
+      "type": "object",
+      "required": ["rows", "cols"],
+      "properties": {
+        "rows":              { "type": "integer", "description": "Number of wordlines (rows)" },
+        "cols":              { "type": "integer", "description": "Number of bitlines (columns)" },
+        "cell_architecture": { "type": "string", "enum": ["1T1R", "0T1R", "2T1R", "1FeFET"], "description": "Cell selector architecture" },
+        "array_size_um2":    { "type": "number", "description": "Total array area (µm²)" },
+        "pitch_nm":          { "type": "number", "description": "Cell pitch (nm)" }
+      }
+    },
+
+    "parameter_snapshot": {
+      "type": "object",
+      "description": "Array operating parameters — key for DSE provenance.",
+      "properties": {
+        "vread_V":           { "type": "number" },
+        "vset_V":            { "type": "number" },
+        "vreset_V":          { "type": "number" },
+        "pulse_width_ns":    { "type": "number" },
+        "temperature_K":     { "type": "number", "default": 300 },
+        "num_levels":        { "type": "integer", "description": "Number of conductance levels per cell" }
+      },
+      "additionalProperties": true
+    },
+
+    "metrics": {
+      "type": "object",
+      "properties": {
+
+        "electrical": {
+          "type": "object",
+          "description": "Array-level electrical performance",
+          "properties": {
+            "read_latency_ns":          { "type": "number" },
+            "write_latency_ns":         { "type": "number" },
+            "read_energy_pJ_op":        { "type": "number", "description": "Energy per read operation (pJ)" },
+            "write_energy_pJ_op":       { "type": "number", "description": "Energy per write operation (pJ)" },
+            "read_bandwidth_GB_s":      { "type": "number" },
+            "write_bandwidth_GB_s":     { "type": "number" },
+            "array_current_uA":         { "type": "number", "description": "Total array current during read (µA)" },
+            "snr_dB":                   { "type": "number", "description": "Read signal-to-noise ratio (dB)" },
+            "bit_error_rate":           { "type": "number", "description": "Raw BER before ECC" }
+          }
+        },
+
+        "variability": {
+          "type": "object",
+          "description": "Statistical variability characterisation across array population",
+          "properties": {
+            "lrs_mean_ohm":             { "type": "number" },
+            "lrs_sigma_ohm":            { "type": "number" },
+            "hrs_mean_ohm":             { "type": "number" },
+            "hrs_sigma_ohm":            { "type": "number" },
+            "vth_window_mean_V":        { "type": "number", "description": "FeFET only" },
+            "vth_window_sigma_V":       { "type": "number", "description": "FeFET only" },
+            "conductance_drift_pct_decade": { "type": "number", "description": "Conductance drift per decade of time (%)" },
+            "temporal_noise_sigma_pct": { "type": "number", "description": "1/f and RTN noise as % of mean conductance" }
+          }
+        },
+
+        "reliability": {
+          "type": "object",
+          "properties": {
+            "retention_time_s":         { "type": "number", "description": "Retention at 85°C (s)" },
+            "endurance_cycles":         { "type": "integer" },
+            "fail_bit_count_at_eol":    { "type": "number", "description": "Failed bits at end of rated endurance" },
+            "mean_time_to_failure_s":   { "type": "number" }
+          }
+        },
+
+        "cim": {
+          "type": "object",
+          "description": "Compute-in-memory specific metrics — for CIM workload mapping",
+          "properties": {
+            "mac_throughput_TOPS":      { "type": "number", "description": "Multiply-accumulate throughput (TOPS)" },
+            "energy_per_mac_fJ":        { "type": "number", "description": "Energy per MAC operation (fJ)" },
+            "effective_precision_bits": { "type": "number", "description": "Effective compute precision considering device noise" },
+            "weight_precision_bits":    { "type": "integer", "description": "Bits per weight stored per cell" },
+            "activation_precision_bits":{ "type": "integer" },
+            "compute_density_TOPS_mm2": { "type": "number", "description": "Compute density (TOPS/mm²)" },
+            "array_utilization":        { "type": "number", "minimum": 0, "maximum": 1 },
+            "adc_resolution_bits":      { "type": "integer", "description": "ADC resolution for current sensing" },
+            "adc_energy_pJ_conversion": { "type": "number" }
+          }
+        },
+
+        "thermal": {
+          "type": "object",
+          "properties": {
+            "peak_temperature_K":       { "type": "number" },
+            "thermal_resistance_K_W":   { "type": "number" },
+            "self_heating_vth_shift_V": { "type": "number", "description": "Vth shift due to self-heating (FeFET)" }
+          }
+        }
+
+      },
+      "additionalProperties": false
+    },
+
+    "uncertainties": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type", "value"],
+        "properties": {
+          "type":  { "type": "string", "enum": ["gaussian", "bounded", "empirical"] },
+          "value": {}
+        }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "required": ["input_ids", "tool_version", "config_hash"],
+      "properties": {
+        "input_ids":        { "type": "array", "items": { "type": "string" } },
+        "tool_version":     { "type": "string" },
+        "config_hash":      { "type": "string" },
+        "device_schema_id": { "type": "string", "description": "session_id of the device.schema LayerOutput this array model was derived from" },
+        "runtime_s":        { "type": "number" }
+      }
+    }
+
+  },
+  "additionalProperties": false
+}

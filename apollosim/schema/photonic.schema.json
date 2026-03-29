@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/seeder-research/APOLLOSim/apollosim/schema/photonic.schema.json",
+  "title": "APOLLOSim Photonic Layer Output",
+  "description": "Canonical output schema for photonic circuit and interconnect simulation. Covers passive/active integrated photonics, electro-optic modulators, photodetectors, and photonic network-on-chip.",
+  "version": "0.1.0",
+  "type": "object",
+  "required": [
+    "apollosim_schema_version",
+    "layer",
+    "tool",
+    "fidelity_level",
+    "session_id",
+    "timestamp_utc",
+    "photonic_domain",
+    "parameter_snapshot",
+    "metrics",
+    "provenance"
+  ],
+  "properties": {
+
+    "apollosim_schema_version": { "type": "string", "const": "0.1.0" },
+    "layer":                    { "type": "string", "const": "photonic" },
+    "tool":                     { "type": "string", "enum": ["meep", "lumerical", "ansys_interconnect", "analytical", "surrogate"] },
+    "fidelity_level":           { "type": "string", "enum": ["ANALYTICAL", "SURROGATE", "PHYSICS"] },
+    "session_id":               { "type": "string", "format": "uuid" },
+    "timestamp_utc":            { "type": "string", "format": "date-time" },
+
+    "photonic_domain": {
+      "type": "string",
+      "enum": ["device", "circuit", "network"],
+      "description": "Simulation scope: single device, photonic circuit (ring+MZI), or photonic NoC."
+    },
+
+    "parameter_snapshot": {
+      "type": "object",
+      "description": "Design parameters that produced this output.",
+      "properties": {
+        "wavelength_nm":         { "type": "number", "description": "Operating wavelength (nm)" },
+        "waveguide_width_nm":    { "type": "number" },
+        "waveguide_height_nm":   { "type": "number" },
+        "waveguide_material":    { "type": "string", "enum": ["Si", "SiN", "LiNbO3", "InP", "GaAs", "custom"] },
+        "cladding_material":     { "type": "string" },
+        "temperature_K":         { "type": "number", "default": 300 },
+        "polarization":          { "type": "string", "enum": ["TE", "TM", "TE+TM"] }
+      },
+      "additionalProperties": true
+    },
+
+    "metrics": {
+      "type": "object",
+      "properties": {
+
+        "waveguide": {
+          "type": "object",
+          "description": "Passive waveguide metrics — present in all photonic_domain values",
+          "properties": {
+            "neff":                      { "type": "number", "description": "Effective refractive index" },
+            "ng":                        { "type": "number", "description": "Group index" },
+            "propagation_loss_dB_cm":    { "type": "number", "description": "Propagation loss (dB/cm)" },
+            "dispersion_ps_nm_km":       { "type": "number", "description": "Group velocity dispersion D (ps/nm/km)" },
+            "confinement_factor":        { "type": "number", "minimum": 0, "maximum": 1 },
+            "bend_loss_dB_per_90deg":    { "type": "number" },
+            "bend_radius_um":            { "type": "number" }
+          }
+        },
+
+        "modulator": {
+          "type": "object",
+          "description": "Electro-optic modulator metrics",
+          "properties": {
+            "half_wave_voltage_V":       { "type": "number", "description": "Vπ (V)" },
+            "vpi_l_V_cm":               { "type": "number", "description": "VπL (V·cm)" },
+            "insertion_loss_dB":         { "type": "number" },
+            "extinction_ratio_dB":       { "type": "number" },
+            "bandwidth_3db_GHz":         { "type": "number" },
+            "modulation_efficiency_pm_V":{ "type": "number", "description": "Resonance shift per voltage (pm/V) — ring modulators" },
+            "energy_per_bit_fJ":         { "type": "number" },
+            "chirp_parameter":           { "type": "number", "description": "Henry linewidth enhancement factor α" },
+            "type":                      { "type": "string", "enum": ["MZI", "ring", "EAM", "Pockels"] }
+          }
+        },
+
+        "detector": {
+          "type": "object",
+          "description": "Photodetector metrics",
+          "properties": {
+            "responsivity_A_W":          { "type": "number" },
+            "dark_current_nA":           { "type": "number" },
+            "bandwidth_3db_GHz":         { "type": "number" },
+            "noise_equivalent_power_W_rtHz": { "type": "number" },
+            "junction_capacitance_fF":   { "type": "number" },
+            "saturation_power_dBm":      { "type": "number" }
+          }
+        },
+
+        "circuit": {
+          "type": "object",
+          "description": "Photonic circuit-level metrics (photonic_domain = circuit)",
+          "properties": {
+            "s_parameters": {
+              "type": "object",
+              "description": "Full S-matrix vs frequency for the photonic circuit",
+              "properties": {
+                "frequency_THz":  { "type": "array", "items": { "type": "number" } },
+                "port_names":     { "type": "array", "items": { "type": "string" } },
+                "s_matrix_re":    { "type": "array", "description": "3D array [freq][port_i][port_j]" },
+                "s_matrix_im":    { "type": "array" }
+              }
+            },
+            "insertion_loss_dB":         { "type": "number", "description": "Circuit-level through-path insertion loss" },
+            "crosstalk_dB":              { "type": "number", "description": "Inter-channel crosstalk" },
+            "free_spectral_range_nm":    { "type": "number", "description": "FSR for resonant structures (nm)" },
+            "q_factor":                  { "type": "number", "description": "Loaded Q factor" },
+            "finesse":                   { "type": "number" }
+          }
+        },
+
+        "network": {
+          "type": "object",
+          "description": "Photonic NoC / interconnect metrics (photonic_domain = network)",
+          "properties": {
+            "aggregate_bandwidth_Tbps":  { "type": "number", "description": "Total network bandwidth (Tbps)" },
+            "energy_per_bit_fJ":         { "type": "number", "description": "End-to-end energy per transmitted bit (fJ/bit)" },
+            "latency_ps":                { "type": "number", "description": "End-to-end optical latency (ps)" },
+            "ber":                       { "type": "number", "description": "Bit error rate (pre-FEC)" },
+            "optical_snr_dB":            { "type": "number" },
+            "wavelength_channels":       { "type": "integer", "description": "Number of WDM channels" },
+            "channel_spacing_GHz":       { "type": "number" },
+            "link_budget_dB":            { "type": "number", "description": "Total optical power budget (dB)" },
+            "topology":                  { "type": "string", "description": "NoC topology identifier (e.g., mesh, ring, butterfly)" }
+          }
+        },
+
+        "thermal": {
+          "type": "object",
+          "description": "Thermo-optic effects",
+          "properties": {
+            "thermo_optic_coeff_per_K":  { "type": "number", "description": "dn/dT (1/K)" },
+            "resonance_shift_pm_K":      { "type": "number", "description": "Resonance wavelength shift (pm/K) — rings" },
+            "tuning_power_mW_FSR":       { "type": "number", "description": "Heater power to tune one FSR (mW)" },
+            "thermal_crosstalk_pm_mW":   { "type": "number", "description": "Resonance shift in adjacent device per mW heater power" }
+          }
+        }
+
+      },
+      "additionalProperties": false
+    },
+
+    "uncertainties": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type", "value"],
+        "properties": {
+          "type":  { "type": "string", "enum": ["gaussian", "bounded", "empirical"] },
+          "value": {}
+        }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "required": ["input_ids", "tool_version", "config_hash"],
+      "properties": {
+        "input_ids":        { "type": "array", "items": { "type": "string" } },
+        "tool_version":     { "type": "string" },
+        "config_hash":      { "type": "string" },
+        "runtime_s":        { "type": "number" }
+      }
+    }
+
+  },
+  "additionalProperties": false
+}
