@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "apollosim"
+version = "0.1.0.dev0"
+description = "Cross-layer co-design and simulation framework for AI/ML accelerators"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "TBD"}
+dependencies = [
+    "jsonschema>=4.21",
+    "pyyaml>=6.0",
+    "numpy>=1.26",
+    "scipy>=1.12",
+    "botorch>=0.10",
+    "ax-platform>=0.3",
+    "scikit-learn>=1.4",
+    "gpytorch>=1.12",
+    "h5py>=3.10",
+    "pandas>=2.2",
+    "matplotlib>=3.8",
+    "plotly>=5.20",
+    "rich>=13.7",
+    "pydantic>=2.6",
+]
+[project.optional-dependencies]
+dev = ["pytest>=8.0","pytest-cov","ruff","mypy","pre-commit"]
+docs = ["sphinx>=7.0","sphinx-rtd-theme","myst-parser"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
